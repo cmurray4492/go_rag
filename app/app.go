@@ -2,8 +2,7 @@ package app
 
 import (
 	"context"
-
-	"github.com/go-delve/delve/pkg/config"
+	"go_rag/config"
 )
 
 func Run(ctx context.Context, cfg config.Config) error {

@@ -22,4 +22,15 @@ func Load() Config {
 		Model:            OS.Getenv("OPENAI_MODEL"),
 		SystemPromptFile: os.Getenv("SYSTEM_PROMPT_FILE"),
 	}
+
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = "https://api.openai.com/v1"
+	}
+
+	if cfg.Model == "" {
+		cfg.Model = "gpt-4o-mini"
+	}
+
+	return cfg
+
 }
