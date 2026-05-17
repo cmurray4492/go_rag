@@ -21,6 +21,7 @@ func main() {
 
 	if err := app.Run(ctx, config.load()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 }
