@@ -19,7 +19,7 @@ func Load() Config {
 	cfg := Config{
 		BaseURL:          os.Getenv("OPEN_BASE_URL"),
 		APIKey:           os.Getenv("OPENAI_API_KEY"),
-		Model:            OS.Getenv("OPENAI_MODEL"),
+		Model:            os.Getenv("OPENAI_MODEL"),
 		SystemPromptFile: os.Getenv("SYSTEM_PROMPT_FILE"),
 	}
 

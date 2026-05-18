@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"go_rag/config"
+	"go_rag/llm"
 )
 
 func Run(ctx context.Context, cfg config.Config) error {
