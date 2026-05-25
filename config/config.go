@@ -17,7 +17,7 @@ func Load() Config {
 	_ = godotenv.Load()
 
 	cfg := Config{
-		BaseURL:          os.Getenv("OPEN_BASE_URL"),
+		BaseURL:          os.Getenv("OPENAI_BASE_URL"),
 		APIKey:           os.Getenv("OPENAI_API_KEY"),
 		Model:            os.Getenv("OPENAI_MODEL"),
 		SystemPromptFile: os.Getenv("SYSTEM_PROMPT_FILE"),
