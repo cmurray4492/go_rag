@@ -2,11 +2,15 @@ package pgvector
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"go_rag/vector"
+	"go_rag/vector/pgvector"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/pgvector/pgvector-go"
 	pgxvec "github.com/pgvector/pgvector-go/pgx"
 )
 
@@ -91,4 +95,47 @@ func firstLine(s string) string {
 		}
 	}
 	return s
+}
+
+func (s *Store) Upsert(ctx context.Context, docs []vector.Document) error {
+	if len(docs) == 0 {
+		return nil
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	const stmt = `
+		INSERT INTO documents (id, content, metadata, embeedding)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (id) DO UPDATE SET
+			content = EXCLUDED.content,
+			metadata = EXCLUDED.metadata,
+			embedding = EXCLUDED.embedding
+	`
+
+	for _, d := range docs {
+		meta, err := marshalMetadata(d.Metadata)
+		if err != nil {
+			return fmt.Errorf("meatadata for %s: %w", d.ID, err)
+		}
+		if _, err := tx.Exec(ctx, stmt, d.ID, d.Content, meta, pgvector.NewVector(d.Embedding)); err != nil {
+			return fmt.Errorf("upsert: %s: %w", d.ID, err)
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func marshalMetadata(m map[string]string) ([]byte, error) {
+	if len(m) == 0 {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(m)
+}
+
+func (s *Store) Query(ctx context.Context, embedding []float32, topk int) ([]vector.Result, error) {
+
 }
