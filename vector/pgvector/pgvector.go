@@ -136,6 +136,49 @@ func marshalMetadata(m map[string]string) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (s *Store) Query(ctx context.Context, embedding []float32, topk int) ([]vector.Result, error) {
+func unmarshalMetadata(raw []byte, dst *map[string]string) error {
+	if len(raw) == 0 {
+		*dst = nil
+		return nil
+	}
+	return json.Unmarshal(raw, dst)
+}
 
+func (s *Store) Query(ctx context.Context, embedding []float32, topk int) ([]vector.Result, error) {
+	if topk <= 0 {
+		return nil, nil
+	}
+
+	const stmt = `
+		SELECT id, content, metadata, embedding <=> $1 as distance 
+		FROM documents
+		ORDER BY embedding <=> %1 
+		LIMIT %2
+	`
+
+	rows, err := s.pool.Query(ctx, stmt, pgvector.NewVector(embedding), topk)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []vector.Result
+	for rows.Next() {
+		var (
+			r        vector.Result
+			metaRaw  []byte
+			distance float64
+		)
+		if err := rows.Scan(&r.ID, &r.Content, &r.metaRaw, &distance); err != nil {
+			return nil, err
+		}
+
+		if err := unmarshalMetadata(metaRaw, &r.Metadata); err != nil {
+			return nil, fmt.Errorf("metadata for %s: %w", r.ID, err)
+		}
+		r.Score = float32(1 - distance)
+		results = append(results, r)
+	}
+
+	return results, rows.Err()
 }
