@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"go_rag/vector"
-	"go_rag/vector/pgvector"
+
+	// "go_rag/vector/pgvector"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -36,7 +37,7 @@ func New(ctx context.Context, opts Options) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse DSN: %w", err)
 	}
-	if err := ensureExtension(ctx, opt.DSN); err != nil {
+	if err := ensureExtension(ctx, opts.DSN); err != nil {
 		return nil, fmt.Errorf("install extension: %w", err)
 	}
 
@@ -68,15 +69,15 @@ func ensureExtension(ctx context.Context, dsn string) error {
 }
 
 func (s *Store) migrate(ctx context.Context, dim int) error {
-	stmts := []strings{
-		fmt.Sprintf(`CREATE TABLE IF NOT EXIST documents (
+	stmts := []string{
+		fmt.Sprintf(`CREATE TABLE IF NOT EXISTS documents (
 		id  TEXT PRIMARY KEY,
 		content  TEXT NOT NULL,
 		metadata  JSONB NOT NULL DEFAULT '{}'::jsonb,
 		embedding  vector(%d) NOT NULL,
-		created_at  TIMESTAMPZ NOT NULL DEFAULT now())
+		created_at  TIMESTAMPTZ NOT NULL DEFAULT now())
 		`, dim),
-		`CREATE INDEX IF NOT EXIST document_embedding_idx
+		`CREATE INDEX IF NOT EXISTS document_embedding_idx
 		  ON documents USING hnsw (embedding vector_cosine_ops)`,
 	}
 
@@ -169,7 +170,7 @@ func (s *Store) Query(ctx context.Context, embedding []float32, topk int) ([]vec
 			metaRaw  []byte
 			distance float64
 		)
-		if err := rows.Scan(&r.ID, &r.Content, &r.metaRaw, &distance); err != nil {
+		if err := rows.Scan(&r.ID, &r.Content, &metaRaw, &distance); err != nil {
 			return nil, err
 		}
 

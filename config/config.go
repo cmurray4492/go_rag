@@ -50,9 +50,9 @@ func atoiOR(s string, fallback int) int {
 	}
 
 	n, err := strconv.Atoi(s)
-	if err := nil {
+	if err != nil {
 		return fallback
 	}
 
-	return n 
+	return n
 }

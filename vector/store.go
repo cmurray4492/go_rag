@@ -15,11 +15,9 @@ type Result struct {
 }
 
 type Store interface {
-	Upsert(ctx context.Context, docs [Document]) error 
-	Queryt(ctx context.Context, embedding []float32, topk int) ([]Result, error) 
+	Upsert(ctx context.Context, docs []Document) error
+	Query(ctx context.Context, embedding []float32, topk int) ([]Result, error)
 	Delete(ctx context.Context, ids []string) error
 	DeleteBySource(ctx context.Context, source string) error
 	Close() error
 }
-
-
